@@ -95,7 +95,7 @@ def fit_ont_epoch(net,yolo_losses,epoch,epoch_size,epoch_size_val,gen,genval,Epo
 #----------------------------------------------------#
 if __name__ == "__main__":
     # 参数初始化
-    annotation_path = '2007_train.txt'
+    annotation_path = 'tt100k_train.txt'
     model = YoloBody(Config)
     Cuda = True
     #-------------------------------#
