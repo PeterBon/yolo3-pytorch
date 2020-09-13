@@ -1,12 +1,12 @@
 import json
 
-datadir = "../datasets/tt100k"
-filedir = datadir + "/annotations.json"
-ids = open(datadir + "/train/ids.txt").read().splitlines()
+datadir = "../datasets/tt100k"  # 数据目录
+filedir = datadir + "/annotations.json"  # 标签文件
+ids = open(datadir + "/train/ids.txt").read().splitlines()  # 训练集图片的id
 annos = json.loads(open(filedir).read())
-classes = annos['types']
+classes = annos['types']  # 所有的交通标志类别
 file = open('tt100k_train.txt', 'w')
-with open('model_data/tt100k_classes.txt','w') as classes_file:
+with open('model_data/tt100k_classes.txt','w') as classes_file:  # 自动生成所有类别的列表
     for cls in classes:
         classes_file.write(cls+'\n')
 
