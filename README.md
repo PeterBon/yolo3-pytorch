@@ -34,3 +34,9 @@
 ![](assets/figure5.png)
 ![](assets/figure6.png)
 
+* 计算mAP，参考 https://github.com/Cartucho/mAP
+
+当我们取不同的置信度，可以获得不同的Precision和不同的Recall，当我们取得置信度够密集的时候，就可以获得非常多的Precision和Recall。
+此时Precision和Recall可以在图片上画出一条线，这条线下部分的面积就是某个类的AP值。
+mAP就是所有的类的AP值求平均。
+
