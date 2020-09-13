@@ -41,6 +41,7 @@
 mAP就是所有的类的AP值求平均。
 
 ### 参考：
+* YOLOv3: An Incremental Improvement
 * Traffic-Sign Detection and Classification in the Wild
 * 改进YOLOv3的交通标志检测方法研究_邓天民
 * 基于YOLO+v3的交通标志牌检测识别_潘卫国
