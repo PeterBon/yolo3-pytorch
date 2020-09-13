@@ -20,3 +20,19 @@
 ### 3.针对交通标志检测改进yolov3
 * yolov3结构
 ![](assets/figure4.png)
+* 用k均值聚类重新选择anchor box，原来是9个（10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326），
+参考项目https://github.com/lars76/kmeans-anchor-boxes
+* 采用深度可分离卷积，减小计算量，提高检测速度
+* GIoU
+
+### 4.结论和对比
+* precision（精确度）和recall（召回率）
+  *  TP（True Positives）意思就是被分为了正样本，而且分对了。
+  * TN（True Negatives）意思就是被分为了负样本，而且分对了，
+  * FP（False Positives）意思就是被分为了正样本，但是分错了（事实上这个样本是负样本）。
+  * FN（False Negatives）意思就是被分为了负样本，但是分错了（事实上这个样本是这样本）。
+
+$$
+precision = TP
+$$
+
