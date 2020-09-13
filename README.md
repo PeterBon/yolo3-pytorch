@@ -40,3 +40,11 @@
 此时Precision和Recall可以在图片上画出一条线，这条线下部分的面积就是某个类的AP值。
 mAP就是所有的类的AP值求平均。
 
+参考：
+* Traffic-Sign Detection and Classification in the Wild
+* 改进YOLOv3的交通标志检测方法研究_邓天民
+* 基于YOLO+v3的交通标志牌检测识别_潘卫国
+* 基于深度可分离卷积的交通标志识别算法_杨晋生
+* 交通标志识别方法综述_伍晓晖
+* 基于YOLOv3的深度学习交通标志识别系统_张钟文
+* Generalized Intersection over Union: A Metric and A Loss for Bounding Box Regression
