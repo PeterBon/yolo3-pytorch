@@ -61,5 +61,5 @@ mAP就是所有的类的AP值求平均。
     - config.py
     - dataloader.py
     - utils.py
-  - annotation.py 读取标签文件,生成tt100k_train.txt
+  - tt100k_annotation.py 读取标签文件,生成tt100k_train.txt
   
