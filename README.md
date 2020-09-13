@@ -49,3 +49,17 @@ mAP就是所有的类的AP值求平均。
 * 交通标志识别方法综述_伍晓晖
 * 基于YOLOv3的深度学习交通标志识别系统_张钟文
 * Generalized Intersection over Union: A Metric and A Loss for Bounding Box Regression
+
+### 代码结构
+
+- yolo3-pytorch
+  - nets 
+    - darknet.py darknet主干网络
+    - yolo3.py
+    - yolo_training.py
+  - utils
+    - config.py
+    - dataloader.py
+    - utils.py
+  - annotation.py 读取标签文件,生成tt100k_train.txt
+  
