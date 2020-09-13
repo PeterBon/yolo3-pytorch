@@ -31,8 +31,6 @@
   * TN（True Negatives）意思就是被分为了负样本，而且分对了，
   * FP（False Positives）意思就是被分为了正样本，但是分错了（事实上这个样本是负样本）。
   * FN（False Negatives）意思就是被分为了负样本，但是分错了（事实上这个样本是这样本）。
-
-$$
-precision = TP
-$$
+![](assets/figure5.png)
+![](assets/figure6.png)
 
