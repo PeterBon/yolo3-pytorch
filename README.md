@@ -23,6 +23,27 @@
 * 用k均值聚类重新选择anchor box，原来是9个（10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326），
 参考项目https://github.com/lars76/kmeans-anchor-boxes
 * 采用深度可分离卷积，减小计算量，提高检测速度
+  * 对于传统的卷积运算，有Ｎ×Ｈ×Ｗ×Ｃ的 输入与ｋ个ｎ×ｎ的卷积核进行卷积运算，在 ｐａｄ＝１和ｓｔｒｉｄｅ＝１的情况下输出为Ｎ×Ｈ×
+Ｗ×ｋ
+![](assets/figure7.png)
+  * 对于深度可分离卷积，在Ｄｅｐｔｈｗｉｓｅ过程中， 将输入的Ｎ×Ｈ×Ｗ×Ｃ划分成Ｃ组，对于每一 组做ｎ×ｎ的卷积运算，收集卷积运算中的每个
+ｃｈａｎｎｅｌ的空间特征
+![](assets/figure8.png)
+  * 在Ｐｏｉｎｔｗｉｓｅ过程中，对 Ｄｅｐｔｈｗｉｓｅ中的结 果进行ｋ个１×１的卷积运算，收集每个ｐｏｉｎｔ上 的特征，也就是卷积运算中的位置特征，经过 Ｐｏｉｎｔｗｉｓｅ和Ｄｅｐｔｈｗｉｓｅ两个步骤，最终输出的结
+果也是Ｎ×Ｈ×Ｗ×ｋ
+![](assets/figure9.png)
+```python
+import torch.nn as nn
+class depthwise_separable_conv(nn.Module):
+    def init(self, nin, nout):
+        super(depthwise_separable_conv, self).init()
+        self.depthwise = nn.Conv2d(nin, nin, kernel_size=3, padding=1, groups=nin)
+        self.pointwise = nn.Conv2d(nin, nout, kernel_size=1)
+    def forward(self, x):
+        out = self.depthwise(x)
+        out = self.pointwise(out)
+        return out
+```
 * GIoU
 
 ### 4.结论和对比
