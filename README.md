@@ -83,4 +83,7 @@ mAP就是所有的类的AP值求平均。
     - dataloader.py
     - utils.py
   - tt100k_annotation.py 读取标签文件,生成tt100k_train.txt，包含图片地址、每个目标的真实框(xmin, ymin, xmax, ymax)以及类别
-  
+  - train.py
+  - predict.py
+  - test.py
+  - yolo.py
