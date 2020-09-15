@@ -56,8 +56,8 @@ def show_pic(img, bboxes=None):
 # 图像均为cv2读取
 class DataAugmentForObjectDetection():
     def __init__(self, rotation_rate=0.5, max_rotation_angle=5,
-                 crop_rate=0.5, shift_rate=0.5, change_light_rate=0.5,
-                 add_noise_rate=0.5, flip_rate=0.5,
+                 crop_rate=1, shift_rate=0, change_light_rate=0.5,
+                 add_noise_rate=0.5, flip_rate=0,
                  cutout_rate=0.5, cut_out_length=50, cut_out_holes=1, cut_out_threshold=0.5):
         self.rotation_rate = rotation_rate
         self.max_rotation_angle = max_rotation_angle
@@ -391,7 +391,7 @@ class DataAugmentForObjectDetection():
                 print('旋转')
                 change_num += 1
                 # angle = random.uniform(-self.max_rotation_angle, self.max_rotation_angle)
-                angle = random.sample([90, 180, 270], 1)[0]
+                angle = 0
                 scale = random.uniform(0.7, 0.8)
                 img, bboxes = self._rotate_img_bbox(img, bboxes, angle, scale)
 
@@ -428,30 +428,24 @@ class DataAugmentForObjectDetection():
 if __name__ == '__main__':
 
     ### test ###
-
-    import shutil
-    from xml_helper import *
-
-    need_aug_num = 1
-
+    import json
     dataAug = DataAugmentForObjectDetection()
 
-    source_pic_root_path = './data_split'
-    source_xml_root_path = './data_voc/VOC2007/Annotations'
+    image_path = '../../datasets/tt100k/test/2315.jpg'
+    annotations_path = '../../datasets/tt100k/annotations.json'
+    imgid = '2315'
+    annos = json.loads(open(annotations_path).read())
+    bboxes = []
+    for obj in annos['imgs'][imgid]['objects']:
+        xmin = obj['bbox']['xmin']
+        ymin = obj['bbox']['ymin']
+        xmax = obj['bbox']['xmax']
+        ymax = obj['bbox']['ymax']
+        bboxes.append([xmin,ymin,xmax,ymax])
 
-    for parent, _, files in os.walk(source_pic_root_path):
-        for file in files:
-            cnt = 0
-            while cnt < need_aug_num:
-                pic_path = os.path.join(parent, file)
-                xml_path = os.path.join(source_xml_root_path, file[:-4] + '.xml')
-                coords = parse_xml(xml_path)  # 解析得到box信息，格式为[[x_min,y_min,x_max,y_max,name]]
-                coords = [coord[:4] for coord in coords]
+    img = cv2.imread(image_path)
+    show_pic(img, bboxes)  # 原图
 
-                img = cv2.imread(pic_path)
-                show_pic(img, coords)  # 原图
-
-                auged_img, auged_bboxes = dataAug.dataAugment(img, coords)
-                cnt += 1
-
-                show_pic(auged_img, auged_bboxes)  # 强化后的图
+    auged_img, auged_bboxes = dataAug.dataAugment(img, bboxes)
+    print(auged_img.shape)
+    show_pic(auged_img, auged_bboxes)  # 强化后的图
