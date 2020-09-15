@@ -18,7 +18,7 @@
 # 注意:
 #     random.seed(),相同的seed,产生的随机数是一样的!!
 
-import time
+
 import random
 import cv2
 import os
