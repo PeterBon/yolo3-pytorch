@@ -127,6 +127,7 @@ class DataAugmentForObjectDetection():
             ymin = bbox[1]
             xmax = bbox[2]
             ymax = bbox[3]
+            # rot_mat:(2,3) , np.array([(xmin + xmax) / 2, ymin, 1]):(3,) , point1:(2,)
             point1 = np.dot(rot_mat, np.array([(xmin + xmax) / 2, ymin, 1]))
             point2 = np.dot(rot_mat, np.array([xmax, (ymin + ymax) / 2, 1]))
             point3 = np.dot(rot_mat, np.array([(xmin + xmax) / 2, ymax, 1]))
@@ -394,6 +395,6 @@ if __name__ == '__main__':
     img = cv2.imread(image_path)
     # show_pic(img, bboxes)  # 原图
 
-    auged_img, auged_bboxes = dataAug.dataAugment(img, bboxes)
+    auged_img, auged_bboxes = dataAug._rotate_img_bbox(img, bboxes)
     print(auged_img.shape)
     show_pic(auged_img, auged_bboxes)  # 强化后的图
