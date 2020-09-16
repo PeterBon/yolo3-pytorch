@@ -310,6 +310,7 @@ class DataAugmentForObjectDetection():
         new_image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT)
         bboxes = np.array(bboxes)
         new_bboxes = bboxes*scale + np.array([left, top, left, top])
+        new_bboxes = new_bboxes.astype(int)
         new_bboxes = new_bboxes.tolist()
         return new_image, new_bboxes
 
