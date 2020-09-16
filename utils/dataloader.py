@@ -44,12 +44,12 @@ class YoloDataset(Dataset):
         labels_np = np.array(labels)
 
         data_aug = DataAugmentForObjectDetection()
-        auged_img, auged_bboxes = data_aug.dataAugment(img_cv, bboxes)
+        auged_img, auged_bboxes = data_aug.dataAugment(img_cv, bboxes)  # 得到增强后的图片，格式为opencv
+        image = Image.fromarray(cv2.cvtColor(auged_img,cv2.COLOR_BGR2RGB))  # 将增强后的图片转化为PIL格式
 
-        image = Image.open(line[0])
         iw, ih = image.size
         h, w = input_shape
-        box = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])
+        box = labels_np
 
         # 调整图片大小
         new_ar = w / h * self.rand(1 - jitter, 1 + jitter) / self.rand(1 - jitter, 1 + jitter)
