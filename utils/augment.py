@@ -57,8 +57,8 @@ def show_pic(img, bboxes=None):
 class DataAugmentForObjectDetection():
     def __init__(self, rotation_rate=0.5, max_rotation_angle=10,
                  crop_rate=1, shift_rate=0, change_light_rate=0.5,
-                 add_noise_rate=0.5, flip_rate=0,
-                 cutout_rate=0.5, cut_out_length=50, cut_out_holes=1, cut_out_threshold=0.5):
+                 add_noise_rate=0, flip_rate=0,
+                 cutout_rate=0, cut_out_length=50, cut_out_holes=1, cut_out_threshold=0.5):
         self.rotation_rate = rotation_rate
         self.max_rotation_angle = max_rotation_angle
         self.crop_rate = crop_rate
@@ -380,46 +380,46 @@ class DataAugmentForObjectDetection():
             bboxes:增强后图片对应的box
         '''
         change_num = 0  # 改变的次数
-        print('------')
+        # print('------')
         while change_num < 1:  # 默认至少有一种数据增强生效
             if random.random() < self.crop_rate:  # 裁剪
-                print('裁剪')
+                # print('裁剪')
                 change_num += 1
                 img, bboxes = self._crop_img_bboxes(img, bboxes)
 
             if random.random() > self.rotation_rate:  # 旋转
-                print('旋转')
+                # print('旋转')
                 change_num += 1
                 # angle = random.uniform(-self.max_rotation_angle, self.max_rotation_angle)
                 angle = random.random() * self.max_rotation_angle * 2 - self.max_rotation_angle
                 scale = random.uniform(0.7, 0.8)
-                print(angle)
-                print(scale)
+                # print(angle)
+                # print(scale)
                 img, bboxes = self._rotate_img_bbox(img, bboxes, angle, scale)
 
             if random.random() < self.shift_rate:  # 平移
-                print('平移')
+                # print('平移')
                 change_num += 1
                 img, bboxes = self._shift_pic_bboxes(img, bboxes)
 
             if random.random() > self.change_light_rate:  # 改变亮度
-                print('亮度')
+                # print('亮度')
                 change_num += 1
                 img = self._changeLight(img)
 
             if random.random() < self.add_noise_rate:  # 加噪声
-                print('加噪声')
+                # print('加噪声')
                 change_num += 1
                 img = self._addNoise(img)
 
             if random.random() < self.cutout_rate:  # cutout
-                print('cutout')
+                # print('cutout')
                 change_num += 1
                 img = self._cutout(img, bboxes, length=self.cut_out_length, n_holes=self.cut_out_holes,
                                    threshold=self.cut_out_threshold)
 
             if random.random() < self.flip_rate:  # 翻转
-                print('翻转')
+                # print('翻转')
                 change_num += 1
                 img, bboxes = self._filp_pic_bboxes(img, bboxes)
             print('\n')

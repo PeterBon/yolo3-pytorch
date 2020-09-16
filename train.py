@@ -108,7 +108,7 @@ def init_weights(model):
 #----------------------------------------------------#
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--start_epoch", type=int, default=1, help="start number of epoch")
+    parser.add_argument("--start_epoch", type=int, default=0, help="start number of epoch")
     parser.add_argument("--end_epoch", type=int, default=20, help="number of epochs")
     parser.add_argument("--lr", type=float, default=0.001, help="number of epochs")
     parser.add_argument("--gamma", type=float, default=0.95, help="number of epochs")

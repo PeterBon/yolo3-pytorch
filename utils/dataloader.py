@@ -13,6 +13,7 @@ from nets.yolo_training import Generator
 import cv2
 from utils.augment import DataAugmentForObjectDetection
 
+
 class YoloDataset(Dataset):
     def __init__(self, train_lines, image_size):
         super(YoloDataset, self).__init__()
@@ -31,7 +32,8 @@ class YoloDataset(Dataset):
         """实时数据增强的随机预处理"""
         line = annotation_line.split()
         # 用opencv读取图片并预处理
-        img_cv = cv2.imread(line[0])
+        image = cv2.imread(line[0])
+
 
         labels = []
         bboxes = []
@@ -44,7 +46,8 @@ class YoloDataset(Dataset):
         labels_np = np.array(labels)
 
         data_aug = DataAugmentForObjectDetection()
-        auged_img, auged_bboxes = data_aug.dataAugment(img_cv, bboxes)  # 得到增强后的图片，格式为opencv
+        auged_img, auged_bboxes = data_aug.dataAugment(image, bboxes)  # 得到增强后的图片，格式为opencv
+
         image = Image.fromarray(cv2.cvtColor(auged_img,cv2.COLOR_BGR2RGB))  # 将增强后的图片转化为PIL格式
 
         iw, ih = image.size
@@ -79,16 +82,16 @@ class YoloDataset(Dataset):
         hue = self.rand(-hue, hue)
         sat = self.rand(1, sat) if self.rand() < .5 else 1 / self.rand(1, sat)
         val = self.rand(1, val) if self.rand() < .5 else 1 / self.rand(1, val)
-        x = cv2.cvtColor(np.array(image,np.float32)/255, cv2.COLOR_RGB2HSV)
-        x[..., 0] += hue*360
-        x[..., 0][x[..., 0]>1] -= 1
-        x[..., 0][x[..., 0]<0] += 1
+        x = cv2.cvtColor(np.array(image, np.float32) / 255, cv2.COLOR_RGB2HSV)
+        x[..., 0] += hue * 360
+        x[..., 0][x[..., 0] > 1] -= 1
+        x[..., 0][x[..., 0] < 0] += 1
         x[..., 1] *= sat
         x[..., 2] *= val
-        x[x[:,:, 0]>360, 0] = 360
-        x[:, :, 1:][x[:, :, 1:]>1] = 1
-        x[x<0] = 0
-        image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB)*255
+        x[x[:, :, 0] > 360, 0] = 360
+        x[:, :, 1:][x[:, :, 1:] > 1] = 1
+        x[x < 0] = 0
+        image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB) * 255
 
         # 调整目标框坐标
         box_data = np.zeros((len(box), 5))
@@ -153,4 +156,3 @@ def yolo_dataset_collate(batch):
         bboxes.append(box)
     images = np.array(images)
     return images, bboxes
-
