@@ -12,7 +12,7 @@ import torch.backends.cudnn as cudnn
 from PIL import Image,ImageFont, ImageDraw
 from torch.autograd import Variable
 from utils.config import Config
-from utils.utils import non_max_suppression, bbox_iou, DecodeBox,letterbox_image,yolo_correct_boxes
+from utils.util import non_max_suppression, bbox_iou, DecodeBox,letterbox_image,yolo_correct_boxes
 
 #--------------------------------------------#
 #   使用自己训练好的模型预测需要修改2个参数

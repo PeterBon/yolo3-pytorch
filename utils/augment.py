@@ -200,7 +200,7 @@ class DataAugmentForObjectDetection():
         rot_mat[0, 2] += rot_move[0]
         rot_mat[1, 2] += rot_move[1]
         # 仿射变换
-        rot_img = cv2.warpAffine(img, rot_mat, (int(math.ceil(nw)), int(math.ceil(nh))), flags=cv2.INTER_LANCZOS4)
+        rot_img = cv2.warpAffine(img, rot_mat, (int(math.ceil(nw)), int(math.ceil(nh))), flags=cv2.INTER_AREA)
 
         # ---------------------- 矫正bbox坐标 ----------------------
         # rot_mat是最终的旋转矩阵
@@ -260,10 +260,10 @@ class DataAugmentForObjectDetection():
         d_to_bottom = h - y_max  # 包含所有目标框的最小框到底部的距离
 
         # 随机扩展这个最小框
-        crop_x_min = int(x_min - random.uniform(0, d_to_left))
-        crop_y_min = int(y_min - random.uniform(0, d_to_top))
-        crop_x_max = int(x_max + random.uniform(0, d_to_right))
-        crop_y_max = int(y_max + random.uniform(0, d_to_bottom))
+        crop_x_min = int(x_min - random.triangular(0, d_to_left))
+        crop_y_min = int(y_min - random.triangular(0, d_to_top))
+        crop_x_max = int(x_max + random.triangular(0, d_to_right))
+        crop_y_max = int(y_max + random.triangular(0, d_to_bottom))
 
         # 随机扩展这个最小框 , 防止别裁的太小
         # crop_x_min = int(x_min - random.uniform(d_to_left//2, d_to_left))
@@ -391,8 +391,10 @@ class DataAugmentForObjectDetection():
                 print('旋转')
                 change_num += 1
                 # angle = random.uniform(-self.max_rotation_angle, self.max_rotation_angle)
-                angle = 0
+                angle = random.random() * 30 - 15
                 scale = random.uniform(0.7, 0.8)
+                print(angle)
+                print(scale)
                 img, bboxes = self._rotate_img_bbox(img, bboxes, angle, scale)
 
             if random.random() < self.shift_rate:  # 平移
@@ -429,6 +431,7 @@ if __name__ == '__main__':
 
     ### test ###
     import json
+
     dataAug = DataAugmentForObjectDetection()
 
     image_path = '../../datasets/tt100k/test/2315.jpg'
@@ -441,10 +444,10 @@ if __name__ == '__main__':
         ymin = obj['bbox']['ymin']
         xmax = obj['bbox']['xmax']
         ymax = obj['bbox']['ymax']
-        bboxes.append([xmin,ymin,xmax,ymax])
+        bboxes.append([xmin, ymin, xmax, ymax])
 
     img = cv2.imread(image_path)
-    show_pic(img, bboxes)  # 原图
+    # show_pic(img, bboxes)  # 原图
 
     auged_img, auged_bboxes = dataAug.dataAugment(img, bboxes)
     print(auged_img.shape)

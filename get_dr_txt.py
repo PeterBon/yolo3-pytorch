@@ -15,7 +15,7 @@ from yolo import YOLO
 from nets.yolo3 import YoloBody
 from PIL import Image,ImageFont, ImageDraw
 from utils.config import Config
-from utils.utils import non_max_suppression, bbox_iou, DecodeBox,letterbox_image,yolo_correct_boxes
+from utils.util import non_max_suppression, bbox_iou, DecodeBox,letterbox_image,yolo_correct_boxes
 from tqdm import tqdm
 
 class mAP_Yolo(YOLO):
