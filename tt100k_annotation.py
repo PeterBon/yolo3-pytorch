@@ -1,5 +1,5 @@
 import json
-
+import os
 datadir = "../datasets/tt100k"  # 数据目录
 filedir = datadir + "/annotations.json"  # 标签文件
 ids = open(datadir + "/train/ids.txt").read().splitlines()  # 训练集图片的id
@@ -13,7 +13,7 @@ with open('model_data/tt100k_classes.txt','w') as classes_file:  # 自动生成�
 for imgid in ids:
     img = annos['imgs'][imgid]
     imgpath = img['path']
-    file.write(datadir+imgpath)
+    file.write(os.path.join(datadir,imgpath))
     objs = img['objects']
     for obj in objs:
         cls = obj['category']

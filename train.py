@@ -108,18 +108,18 @@ def init_weights(model):
 #----------------------------------------------------#
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--start_epoch", type=int, default=20, help="start number of epoch")
-    parser.add_argument("--end_epoch", type=int, default=30, help="number of epochs")
+    parser.add_argument("--start_epoch", type=int, default=1, help="start number of epoch")
+    parser.add_argument("--end_epoch", type=int, default=20, help="number of epochs")
     parser.add_argument("--lr", type=float, default=0.001, help="number of epochs")
     parser.add_argument("--gamma", type=float, default=0.95, help="number of epochs")
-    parser.add_argument("--freeze", type=bool, default=False, help="是否将前面冻结训练")
+    parser.add_argument("--freeze", type=bool, default=True, help="是否将前面冻结训练")
     parser.add_argument("--annotation_path", type=str, default='tt100k_train.txt', help="train.txt")
     parser.add_argument("--batch_size", type=int, default=4, help="size of each image batch")
-    parser.add_argument("--pretrained_weights", type=str, default="logs/Epoch19-Total_Loss10.8448-Val_Loss11.7139.pth",
+    parser.add_argument("--pretrained_weights", type=str, default="logs/yolo_weights.pth",
                         help="if specified starts from checkpoint model")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     opt = parser.parse_args()
-    print(opt)
+
     # 参数初始化,权值初始化
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = YoloBody(Config).to(device)
@@ -128,7 +128,12 @@ if __name__ == "__main__":
     if opt.pretrained_weights:
         print('Loading weights into state dict...')
         if opt.pretrained_weights.endswith(".pth"):
-            model.load_state_dict(torch.load(opt.pretrained_weights))
+            model_dict = model.state_dict()
+            pretrained_dict = torch.load(opt.pretrained_weights)
+            pretrained_dict = {k: v for k, v in pretrained_dict.items() if np.shape(model_dict[k]) == np.shape(v)}
+            model_dict.update(pretrained_dict)
+            model.load_state_dict(model_dict)
+            # model.load_state_dict(torch.load(opt.pretrained_weights))
         else:
             model.load_darknet_weights(opt.pretrained_weights)
         print('Finished!')
@@ -158,7 +163,7 @@ if __name__ == "__main__":
     num_train = len(lines) - num_val
 
     # 优化器,最开始使用1e-3的学习率可以收敛的更快
-    lr = opt.lr * opt.gamma ** (2 * opt.start_epoch)
+    lr = opt.lr * opt.gamma ** (2 * opt.start_epoch)  # 初始化学习率
     print(lr)
     optimizer = optim.Adam(net.parameters(), lr)
     lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=opt.gamma)

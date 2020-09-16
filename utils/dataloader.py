@@ -11,6 +11,7 @@ from torch.utils.data.dataset import Dataset
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 from nets.yolo_training import Generator
 import cv2
+from utils.augment import DataAugmentForObjectDetection
 
 class YoloDataset(Dataset):
     def __init__(self, train_lines, image_size):
@@ -29,6 +30,14 @@ class YoloDataset(Dataset):
     def get_random_data(self, annotation_line, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5):
         """实时数据增强的随机预处理"""
         line = annotation_line.split()
+        # 用opencv读取图片并预处理
+        img_cv = cv2.imread(line[0])
+        bboxes_cv = []
+
+
+        data_aug = DataAugmentForObjectDetection()
+        data_aug.dataAugment(img_cv,)
+
         image = Image.open(line[0])
         iw, ih = image.size
         h, w = input_shape
