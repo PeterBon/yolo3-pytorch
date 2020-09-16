@@ -369,6 +369,30 @@ class DataAugmentForObjectDetection():
 
         return flip_img, flip_bboxes
 
+    '''
+    letterbox:将图片补成正方形并缩放到需要的大小
+    输入：
+        image:opencv的图像矩阵 (H,W,C) BGR
+        bboxes：bbox矩阵 （m,4）每列为(xmin,ymin,xmax,ymax)
+        new_shape:将图片调整为该尺寸
+    '''
+    def letterbox(self, image, bboxes, new_shape=(416, 416), color=[128, 128, 128]):
+        ih, iw = image.shape[0:2]
+        w, h = new_shape
+        scale = min(h / ih, w / iw)
+        nh = int(ih * scale)
+        nw = int(iw * scale)
+        image = cv2.resize(image, (nw, nh), interpolation=cv2.INTER_AREA)
+        top = (h - nh) // 2
+        bottom = h - nh - top
+        left = (w - nw) // 2
+        right = w - nw - left
+        new_image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT)
+
+
+
+        return new_image
+
     def dataAugment(self, img, bboxes):
         '''
         图像增强
