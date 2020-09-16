@@ -375,8 +375,12 @@ class DataAugmentForObjectDetection():
         image:opencv的图像矩阵 (H,W,C) BGR
         bboxes：bbox矩阵 （m,4）每列为(xmin,ymin,xmax,ymax)
         new_shape:将图片调整为该尺寸
+    输出：
+        new_image
+        new_bboxes
     '''
-    def letterbox(self, image, bboxes, new_shape=(416, 416), color=[128, 128, 128]):
+
+    def letterbox(self, image, bboxes, new_shape=(416, 416)):
         ih, iw = image.shape[0:2]
         w, h = new_shape
         scale = min(h / ih, w / iw)
@@ -389,9 +393,9 @@ class DataAugmentForObjectDetection():
         right = w - nw - left
         new_image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT)
 
+        new_bboxes = bboxes*scale + np.array([left, top, left, top])
 
-
-        return new_image
+        return new_image, new_bboxes
 
     def dataAugment(self, img, bboxes):
         '''
