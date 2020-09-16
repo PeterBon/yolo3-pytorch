@@ -55,7 +55,7 @@ def show_pic(img, bboxes=None):
 
 # 图像均为cv2读取
 class DataAugmentForObjectDetection():
-    def __init__(self, rotation_rate=0.5, max_rotation_angle=5,
+    def __init__(self, rotation_rate=0.5, max_rotation_angle=10,
                  crop_rate=1, shift_rate=0, change_light_rate=0.5,
                  add_noise_rate=0.5, flip_rate=0,
                  cutout_rate=0.5, cut_out_length=50, cut_out_holes=1, cut_out_threshold=0.5):
@@ -391,7 +391,7 @@ class DataAugmentForObjectDetection():
                 print('旋转')
                 change_num += 1
                 # angle = random.uniform(-self.max_rotation_angle, self.max_rotation_angle)
-                angle = random.random() * 30 - 15
+                angle = random.random() * self.max_rotation_angle * 2 - self.max_rotation_angle
                 scale = random.uniform(0.7, 0.8)
                 print(angle)
                 print(scale)

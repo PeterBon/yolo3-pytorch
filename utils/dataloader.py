@@ -32,11 +32,19 @@ class YoloDataset(Dataset):
         line = annotation_line.split()
         # 用opencv读取图片并预处理
         img_cv = cv2.imread(line[0])
-        bboxes_cv = []
 
+        labels = []
+        bboxes = []
+
+        for label_str in line[1:]:
+            label_list = list(map(int, label_str.split(',')))
+            bbox_list = label_list[:4]
+            labels.append(label_list)
+            bboxes.append(bbox_list)
+        labels_np = np.array(labels)
 
         data_aug = DataAugmentForObjectDetection()
-        data_aug.dataAugment(img_cv,)
+        auged_img, auged_bboxes = data_aug.dataAugment(img_cv, bboxes)
 
         image = Image.open(line[0])
         iw, ih = image.size
