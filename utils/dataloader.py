@@ -115,7 +115,7 @@ class YoloDataset(Dataset):
         if (box_data[:, :4] > 0).any():
             return image_data, box_data
         else:
-            return image_data, []
+            return image_data, []  # box可能为[]的list
 
     def __getitem__(self, index):
         if index == 0:
@@ -143,8 +143,8 @@ class YoloDataset(Dataset):
         img = np.array(img, dtype=np.float32)
 
         tmp_inp = np.transpose(img / 255.0, (2, 0, 1))
-        tmp_targets = np.array(y, dtype=np.float32)
-        return tmp_inp, tmp_targets
+        tmp_targets = np.array(y, dtype=np.float32)  # 如果y是[]的话直接转换为空array
+        return tmp_inp, tmp_targets  # targets可能为空array
 
 
 # DataLoader中collate_fn使用

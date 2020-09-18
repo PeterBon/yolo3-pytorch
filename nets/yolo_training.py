@@ -142,7 +142,7 @@ class YOLOLoss(nn.Module):
         # 获得先验框
         anchor_index = [[0,1,2],[3,4,5],[6,7,8]][self.feature_length.index(in_w)]
         subtract_index = [0,3,6][self.feature_length.index(in_w)]
-        # 创建全是0或者全是1的阵列
+        # 创建全是0或者全是1的阵列，注意第一个维度是bs，使得接下来的操作对于该批次的不同图像都是独立的
         mask = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
         noobj_mask = torch.ones(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
 
@@ -155,7 +155,7 @@ class YOLOLoss(nn.Module):
 
         box_loss_scale_x = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
         box_loss_scale_y = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
-        for b in range(bs):
+        for b in range(bs):  # 接下来的所有操作都是对第b批次对应的数据做的
             for t in range(target[b].shape[0]):  # 若shape[0] = 0 则不会进入for循环
                 # 计算出在特征层上的点位
                 gx = target[b][t, 0] * in_w

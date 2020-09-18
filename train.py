@@ -35,7 +35,7 @@ def fit_ont_epoch(net,yolo_losses,epoch,epoch_size,epoch_size_val,gen,genval,Epo
             with torch.no_grad():
                 if cuda:
                     images = Variable(torch.from_numpy(images).type(torch.FloatTensor)).cuda()
-                    targets = [Variable(torch.from_numpy(ann).type(torch.FloatTensor)) for ann in targets]
+                    targets = [Variable(torch.from_numpy(ann).type(torch.FloatTensor)) for ann in targets]  # 空array的target也会被转换为空tensor
                 else:
                     images = Variable(torch.from_numpy(images).type(torch.FloatTensor))
                     targets = [Variable(torch.from_numpy(ann).type(torch.FloatTensor)) for ann in targets]
