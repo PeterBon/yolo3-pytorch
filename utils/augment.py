@@ -398,3 +398,4 @@ if __name__ == '__main__':
     auged_img, auged_bboxes = dataAug._rotate_img_bbox(img, bboxes)
     print(auged_img.shape)
     show_pic(auged_img, auged_bboxes)  # 强化后的图
+    cv2.perspectiveTransform()
