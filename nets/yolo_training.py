@@ -156,7 +156,7 @@ class YOLOLoss(nn.Module):
         box_loss_scale_x = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
         box_loss_scale_y = torch.zeros(bs, int(self.num_anchors/3), in_h, in_w, requires_grad=False)
         for b in range(bs):
-            for t in range(target[b].shape[0]):
+            for t in range(target[b].shape[0]):  # 若shape[0] = 0 则不会进入for循环
                 # 计算出在特征层上的点位
                 gx = target[b][t, 0] * in_w
                 gy = target[b][t, 1] * in_h
