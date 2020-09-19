@@ -29,7 +29,7 @@ class YoloDataset(Dataset):
     def rand(self, a=0, b=1):
         return np.random.rand() * (b - a) + a
 
-    def get_random_data(self, annotation_line, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5):
+    def get_random_data(self, annotation_line, input_shape, hgain=.5, sgain=.5, vgain=.5):
         """实时数据增强的随机预处理"""
         line = annotation_line.split()
         # 用opencv读取图片并预处理
@@ -39,52 +39,23 @@ class YoloDataset(Dataset):
         cls = targets[:, -1]
         # 1、随机裁剪，更新image、bboxes和targets
         image, bboxes = random_crop(image, bboxes)
-        targets = np.concatenate((cls,bboxes),axis=1)
+        targets = np.concatenate((cls, bboxes), axis=1)
 
         # 2、letterbox，输出416x416
-        image, targets = letterbox(image, targets)
+        image, targets = letterbox(image, targets, new_shape=input_shape)
 
         # 3、随机透视变换
         image, targets = random_perspective(image, targets)
 
-        # 色域变换
-        hue = self.rand(-hue, hue)
-        sat = self.rand(1, sat) if self.rand() < .5 else 1 / self.rand(1, sat)
-        val = self.rand(1, val) if self.rand() < .5 else 1 / self.rand(1, val)
-        x = cv2.cvtColor(np.array(image, np.float32) / 255, cv2.COLOR_RGB2HSV)
-        x[..., 0] += hue * 360
-        x[..., 0][x[..., 0] > 1] -= 1
-        x[..., 0][x[..., 0] < 0] += 1
-        x[..., 1] *= sat
-        x[..., 2] *= val
-        x[x[:, :, 0] > 360, 0] = 360
-        x[:, :, 1:][x[:, :, 1:] > 1] = 1
-        x[x < 0] = 0
-        image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB) * 255
+        # 4、色域变换
+        augment_hsv(image, hgain=hgain, sgain=sgain, vgain=vgain)
 
-        # 调整目标框坐标
-        box_data = np.zeros((len(box), 5))
-        if len(box) > 0:
-            np.random.shuffle(box)
-            box[:, [0, 2]] = box[:, [0, 2]] * nw / iw + dx
-            box[:, [1, 3]] = box[:, [1, 3]] * nh / ih + dy
-            if flip:
-                box[:, [0, 2]] = w - box[:, [2, 0]]
-            box[:, 0:2][box[:, 0:2] < 0] = 0
-            box[:, 2][box[:, 2] > w] = w
-            box[:, 3][box[:, 3] > h] = h
-            box_w = box[:, 2] - box[:, 0]
-            box_h = box[:, 3] - box[:, 1]
-            box = box[np.logical_and(box_w > 1, box_h > 1)]  # 保留有效框
-            box_data = np.zeros((len(box), 5))
-            box_data[:len(box)] = box
-        if len(box) == 0:
-            return image_data, []
+        # 5、targets由cls,xyxy转为xyxy,cls
+        cls = targets[:, 0]
+        bboxes = targets[:, 1:5]
+        targets = np.concatenate((bboxes, cls), axis=1)
 
-        if (box_data[:, :4] > 0).any():
-            return image_data, box_data
-        else:
-            return image_data, []  # box可能为[]的list
+        return image, targets
 
     def __getitem__(self, index):
         if index == 0:
@@ -109,9 +80,11 @@ class YoloDataset(Dataset):
             boxes[:, 1] = boxes[:, 1] + boxes[:, 3] / 2
             y = np.concatenate([boxes, y[:, -1:]], axis=-1)
 
+        cv2.cvtColor(img, cv2.COLOR_BGR2RGB, dst=img)
+
         img = np.array(img, dtype=np.float32)
 
-        tmp_inp = np.transpose(img / 255.0, (2, 0, 1))
+        tmp_inp = np.transpose(img / 255.0, (2, 0, 1))  # pytorch中通道C在前面，(C,H,W)
         tmp_targets = np.array(y, dtype=np.float32)  # 如果y是[]的话直接转换为空array
         return tmp_inp, tmp_targets  # targets可能为空array
 
@@ -138,7 +111,7 @@ def random_crop(image, bboxes):
         crop_bboxes:裁剪后的bounding box的坐标array
     """
     # ---------------------- 裁剪图像 ----------------------
-    if len(bboxes > 0):
+    if len(bboxes):
         h, w, _ = image.shape
         # 找到刚好包含所有box的框
         max_bbox = np.concatenate([np.min(bboxes[:, 0:2], axis=0), np.max(bboxes[:, 2:4], axis=0)], axis=-1)
@@ -191,16 +164,17 @@ def letterbox(img, targets=(), new_shape=(416, 416), color=(114, 114, 114), auto
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
-    # targets:cls,xyxy
-    box = targets[:, 1:5]
-    box[:, 0] = box[:, 0] * ratio + dw
-    box[:, 1] = box[:, 1] * ratio + dh
-    box[:, 2] = box[:, 2] * ratio + dw
-    box[:, 3] = box[:, 3] * ratio + dh
+    if len(targets):
+        # targets:cls,xyxy
+        box = targets[:, 1:5]
+        box[:, 0] = box[:, 0] * ratio + dw
+        box[:, 1] = box[:, 1] * ratio + dh
+        box[:, 2] = box[:, 2] * ratio + dw
+        box[:, 3] = box[:, 3] * ratio + dh
 
-    i = box_candidates(targets[:,1:5].T*ratio, box.T)
-    targets = targets[i]
-    targets[:, 1:5] = box[i]
+        i = box_candidates(targets[:, 1:5].T * ratio, box.T)
+        targets = targets[i]
+        targets[:, 1:5] = box[i]
 
     return img, targets
 
@@ -290,6 +264,25 @@ def random_perspective(img, targets=(), degrees=10, translate=.1, scale=.1, shea
         targets[:, 1:5] = xy[i]
 
     return img, targets
+
+
+def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
+    r = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain] + 1  # random gains
+    hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
+    dtype = img.dtype  # uint8
+
+    x = np.arange(0, 256, dtype=np.int16)
+    lut_hue = ((x * r[0]) % 180).astype(dtype)
+    lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
+    lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
+
+    img_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val))).astype(dtype)
+    cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR, dst=img)  # no return needed
+
+    # Histogram equalization
+    # if random.random() < 0.2:
+    #     for i in range(3):
+    #         img[:, :, i] = cv2.equalizeHist(img[:, :, i])
 
 
 def box_candidates(box1, box2, wh_thr=2, ar_thr=20, area_thr=0.1):  # box1(4,n), box2(4,n)
