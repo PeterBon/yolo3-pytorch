@@ -34,7 +34,23 @@ class YoloDataset(Dataset):
         line = annotation_line.split()
         # 用opencv读取图片并预处理
         image = cv2.imread(line[0])
-        box = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])
+        targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls
+        bboxes = targets[:, :4]
+        cls = targets[:, -1]
+        # 1、随机裁剪，更新image、bboxes和targets
+        image, bboxes = random_crop(image, bboxes)
+
+        # 2、letterbox，输出416x416
+        image, bboxes = letterbox(image, bboxes)
+
+        # 3、抛弃无效框
+        targets = np.concatenate((cls, bboxes), axis=1)
+        bboxes_w = bboxes[:, 2] - bboxes[:, 0]
+        bboxes_h = bboxes[:, 3] - bboxes[:, 1]
+        targets = targets[np.logical_and(bboxes_w > 1, bboxes_h > 1)]  # 保留有效框
+
+        # 4、随机透视变换
+        image, targets = random_perspective(image, targets)
 
         labels = []
         bboxes = []
@@ -193,13 +209,53 @@ def random_crop(image, bboxes):
     return image, bboxes
 
 
+def letterbox(img, targets, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
+    # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232
+    shape = img.shape[:2]  # current shape [height, width]
+    if isinstance(new_shape, int):
+        new_shape = (new_shape, new_shape)
+
+    # Scale ratio (new / old)
+    r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
+    if not scaleup:  # only scale down, do not scale up (for better test mAP)
+        r = min(r, 1.0)
+
+    # Compute padding
+    ratio = r, r  # width, height ratios
+    new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
+    dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]  # wh padding
+    if auto:  # minimum rectangle
+        dw, dh = np.mod(dw, 64), np.mod(dh, 64)  # wh padding
+    elif scaleFill:  # stretch
+        dw, dh = 0.0, 0.0
+        new_unpad = (new_shape[1], new_shape[0])
+        ratio = new_shape[1] / shape[1], new_shape[0] / shape[0]  # width, height ratios
+
+    dw /= 2  # divide padding into 2 sides
+    dh /= 2
+
+    if shape[::-1] != new_unpad:  # resize
+        img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_AREA)
+    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
+    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+    img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
+    # targets:cls,xyxy
+    targets_0 = targets
+    targets[:, 1] = targets_0[:, 1] * ratio + dw
+    targets[:, 2] = targets_0[:, 2] * ratio + dh
+    targets[:, 3] = targets_0[:, 3] * ratio + dw
+    targets[:, 4] = targets_0[:, 4] * ratio + dh
+
+    i = box_candidates(targets_0, targets)
+    targets = targets[i]
+
+    return img, targets
+
+
 def random_perspective(img, targets=(), degrees=10, translate=.1, scale=.1, shear=10, perspective=0.0, border=(0, 0)):
     # torchvision.transforms.RandomAffine(degrees=(-10, 10), translate=(.1, .1), scale=(.9, 1.1), shear=(-10, 10))
     # targets = [cls, xyxy]
-    """
-    透视变换：旋转，平移，缩放，错切，透视
-    targets = [xmin,ymin,xmax,ymax] shape = (n,4)
-    """
+
     height = img.shape[0] + border[0] * 2  # shape(h,w,c)
     width = img.shape[1] + border[1] * 2
 
@@ -250,7 +306,7 @@ def random_perspective(img, targets=(), degrees=10, translate=.1, scale=.1, shea
     if n:
         # warp points
         xy = np.ones((n * 4, 3))
-        xy[:, :2] = targets[:, [0, 1, 2, 3, 0, 3, 2, 1]].reshape(n * 4, 2)  # x1y1, x2y2, x1y2, x2y1
+        xy[:, :2] = targets[:, [1, 2, 3, 4, 1, 4, 3, 2]].reshape(n * 4, 2)  # x1y1, x2y2, x1y2, x2y1
         xy = xy @ M.T  # transform
         if perspective:
             xy = (xy[:, :2] / xy[:, 2:3]).reshape(n, 8)  # rescale
@@ -276,8 +332,9 @@ def random_perspective(img, targets=(), degrees=10, translate=.1, scale=.1, shea
         xy[:, [1, 3]] = xy[:, [1, 3]].clip(0, height)
 
         # filter candidates
-        i = box_candidates(box1=targets.T * s, box2=xy.T)
-        targets = xy[i]
+        i = box_candidates(box1=targets[:, 1:5].T * s, box2=xy.T)
+        targets = targets[i]
+        targets[:, 1:5] = xy[i]
 
     return img, targets
 
