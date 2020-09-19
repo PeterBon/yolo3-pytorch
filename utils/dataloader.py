@@ -12,6 +12,7 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 from nets.yolo_training import Generator
 import cv2
 from utils.augment import DataAugmentForObjectDetection
+import random
 
 
 class YoloDataset(Dataset):
@@ -33,7 +34,7 @@ class YoloDataset(Dataset):
         line = annotation_line.split()
         # 用opencv读取图片并预处理
         image = cv2.imread(line[0])
-
+        box = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])
 
         labels = []
         bboxes = []
@@ -48,7 +49,7 @@ class YoloDataset(Dataset):
         data_aug = DataAugmentForObjectDetection()
         auged_img, auged_bboxes = data_aug.dataAugment(image, bboxes)  # 得到增强后的图片，格式为opencv
 
-        image = Image.fromarray(cv2.cvtColor(auged_img,cv2.COLOR_BGR2RGB))  # 将增强后的图片转化为PIL格式
+        image = Image.fromarray(cv2.cvtColor(auged_img, cv2.COLOR_BGR2RGB))  # 将增强后的图片转化为PIL格式
 
         iw, ih = image.size
         h, w = input_shape
@@ -121,7 +122,7 @@ class YoloDataset(Dataset):
         if index == 0:
             shuffle(self.train_lines)
         lines = self.train_lines
-        n = self.train_batches
+        n = self.train_batches  # 总共有多少行
         index = index % n
         img, y = self.get_random_data(lines[index], self.image_size[0:2])
         if len(y) != 0:
@@ -156,3 +157,40 @@ def yolo_dataset_collate(batch):
         bboxes.append(box)
     images = np.array(images)
     return images, bboxes
+
+
+def random_crop(image, bboxes):
+    """
+    裁剪后的图片要包含所有的框
+    输入:
+        img:图像array
+        bboxes:该图像包含的所有boundingboxs,一个array,每个元素为[x_min, y_min, x_max, y_max],要确保是数值
+    输出:
+        crop_img:裁剪后的图像array
+        crop_bboxes:裁剪后的bounding box的坐标array
+    """
+    # ---------------------- 裁剪图像 ----------------------
+    h, w, _ = image.shape
+
+    # 没有bboxes则直接返回
+    if len(bboxes == 0):
+        return image, bboxes
+    # 找到刚好包含所有box的框
+    max_bbox = np.concatenate([np.min(bboxes[:, 0:2], axis=0), np.max(bboxes[:, 2:4], axis=0)], axis=-1)
+
+    max_l_trans = max_bbox[0]  # 包含所有目标框的最小框到左边的距离
+    max_u_trans = max_bbox[1]  # 包含所有目标框的最小框到顶端的距离
+    max_r_trans = w - max_bbox[2]  # 包含所有目标框的最小框到右边的距离
+    max_d_trans = h - max_bbox[3]  # 包含所有目标框的最小框到底部的距离
+
+    crop_xmin = max(0, int(max_bbox[0] - random.uniform(0, max_l_trans)))
+    crop_ymin = max(0, int(max_bbox[1] - random.uniform(0, max_u_trans)))
+    crop_xmax = max(w, int(max_bbox[2] + random.uniform(0, max_r_trans)))
+    crop_ymax = max(h, int(max_bbox[3] + random.uniform(0, max_d_trans)))
+
+    image = image[crop_ymin: crop_ymax, crop_xmin: crop_xmax]
+
+    bboxes[:, [0, 2]] = bboxes[:, [0, 2]] - crop_xmin
+    bboxes[:, [1, 3]] = bboxes[:, [1, 3]] - crop_ymin
+
+    return image, bboxes
