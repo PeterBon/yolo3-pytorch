@@ -209,7 +209,7 @@ def random_crop(image, bboxes):
     return image, bboxes
 
 
-def letterbox(img, targets, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
+def letterbox(img, targets=(), new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
     # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232
     shape = img.shape[:2]  # current shape [height, width]
     if isinstance(new_shape, int):
@@ -240,14 +240,15 @@ def letterbox(img, targets, new_shape=(416, 416), color=(114, 114, 114), auto=Tr
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
     # targets:cls,xyxy
-    targets_0 = targets
-    targets[:, 1] = targets_0[:, 1] * ratio + dw
-    targets[:, 2] = targets_0[:, 2] * ratio + dh
-    targets[:, 3] = targets_0[:, 3] * ratio + dw
-    targets[:, 4] = targets_0[:, 4] * ratio + dh
+    box = targets[:, 1:5]
+    box[:, 0] = box[:, 0] * ratio + dw
+    box[:, 1] = box[:, 1] * ratio + dh
+    box[:, 2] = box[:, 2] * ratio + dw
+    box[:, 3] = box[:, 3] * ratio + dh
 
-    i = box_candidates(targets_0, targets)
+    i = box_candidates(targets[:,1:5].T*ratio, box.T)
     targets = targets[i]
+    targets[:, 1:5] = box[i]
 
     return img, targets
 
