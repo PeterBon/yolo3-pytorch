@@ -39,61 +39,13 @@ class YoloDataset(Dataset):
         cls = targets[:, -1]
         # 1、随机裁剪，更新image、bboxes和targets
         image, bboxes = random_crop(image, bboxes)
+        targets = np.concatenate((cls,bboxes),axis=1)
 
         # 2、letterbox，输出416x416
-        image, bboxes = letterbox(image, bboxes)
+        image, targets = letterbox(image, targets)
 
-        # 3、抛弃无效框
-        targets = np.concatenate((cls, bboxes), axis=1)
-        bboxes_w = bboxes[:, 2] - bboxes[:, 0]
-        bboxes_h = bboxes[:, 3] - bboxes[:, 1]
-        targets = targets[np.logical_and(bboxes_w > 1, bboxes_h > 1)]  # 保留有效框
-
-        # 4、随机透视变换
+        # 3、随机透视变换
         image, targets = random_perspective(image, targets)
-
-        labels = []
-        bboxes = []
-
-        for label_str in line[1:]:
-            label_list = list(map(int, label_str.split(',')))
-            bbox_list = label_list[:4]
-            labels.append(label_list)
-            bboxes.append(bbox_list)
-        labels_np = np.array(labels)
-
-        data_aug = DataAugmentForObjectDetection()
-        auged_img, auged_bboxes = data_aug.dataAugment(image, bboxes)  # 得到增强后的图片，格式为opencv
-
-        image = Image.fromarray(cv2.cvtColor(auged_img, cv2.COLOR_BGR2RGB))  # 将增强后的图片转化为PIL格式
-
-        iw, ih = image.size
-        h, w = input_shape
-        box = labels_np
-
-        # 调整图片大小
-        new_ar = w / h * self.rand(1 - jitter, 1 + jitter) / self.rand(1 - jitter, 1 + jitter)
-        scale = self.rand(.5, 1.5)
-        if new_ar < 1:
-            nh = int(scale * h)
-            nw = int(nh * new_ar)
-        else:
-            nw = int(scale * w)
-            nh = int(nw / new_ar)
-        image = image.resize((nw, nh), Image.BICUBIC)
-
-        # 放置图片
-        dx = int(self.rand(0, w - nw))
-        dy = int(self.rand(0, h - nh))
-        new_image = Image.new('RGB', (w, h),
-                              (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)))
-        new_image.paste(image, (dx, dy))
-        image = new_image
-
-        # 是否翻转图片
-        flip = self.rand() < .5
-        if flip:
-            image = image.transpose(Image.FLIP_LEFT_RIGHT)
 
         # 色域变换
         hue = self.rand(-hue, hue)
