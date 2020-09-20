@@ -7,9 +7,9 @@ ids_train = open(datadir + "/train/ids.txt").read().splitlines()  # 训练集图
 annos = json.loads(open(filedir).read())
 classes_all = annos['types']  # 所有的交通标志类别
 classes = open('../model_data/tt100k_classes.txt').read().splitlines()  # 要训练的类别
-with open('../model_data/tt100k_classes_all.txt', 'w') as classes_file:  # 自动生成所有类别的列表
+with open('../model_data/tt100k_classes_all.txt', 'w') as classes_all_file:  # 自动生成所有类别的列表
     for cls in classes_all:
-        classes_file.write(cls + '\n')
+        classes_all_file.write(cls + '\n')
 
 file = open('../tt100k_train.txt', 'w')
 for imgid in ids_train:
