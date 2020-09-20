@@ -36,7 +36,7 @@ class YoloDataset(Dataset):
         image = cv2.imread(line[0])
         targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls
         bboxes = targets[:, :4]
-        cls = targets[:, -1]
+        cls = targets[:, -1].reshape(len(targets),1)
         # 1、随机裁剪，更新image、bboxes和targets
         image, bboxes = random_crop(image, bboxes)
         targets = np.concatenate((cls, bboxes), axis=1)
