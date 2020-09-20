@@ -34,26 +34,28 @@ class YoloDataset(Dataset):
         line = annotation_line.split()
         # 用opencv读取图片并预处理
         image = cv2.imread(line[0])
-        targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls
-        bboxes = targets[:, :4]
-        cls = targets[:, -1].reshape(len(targets), 1)
-        # 1、随机裁剪，更新image、bboxes和targets
-        image, bboxes = random_crop(image, bboxes)
-        targets = np.concatenate((cls, bboxes), axis=1)
+        targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls 可能为空shape = (0,)
+        n = len(targets)
+        if n:
+            bboxes = targets[:, :4]
+            cls = targets[:, -1].reshape(n, 1)
+            # 1、随机裁剪，更新image、bboxes和targets
+            image, bboxes = random_crop(image, bboxes)
+            targets = np.concatenate((cls, bboxes), axis=1)
 
-        # 2、letterbox，输出416x416
-        image, targets = letterbox(image, targets, new_shape=input_shape)
+            # 2、letterbox，输出416x416
+            image, targets = letterbox(image, targets, new_shape=input_shape)
 
-        # 3、随机透视变换
-        image, targets = random_perspective(image, targets)
+            # 3、随机透视变换
+            image, targets = random_perspective(image, targets)
 
-        # 4、色域变换
-        augment_hsv(image, hgain=hgain, sgain=sgain, vgain=vgain)
+            # 4、色域变换
+            augment_hsv(image, hgain=hgain, sgain=sgain, vgain=vgain)
 
-        # 5、targets由cls,xyxy转为xyxy,cls
-        cls = targets[:, 0].reshape(len(targets), 1)
-        bboxes = targets[:, 1:5]
-        targets = np.concatenate((bboxes, cls), axis=1)
+            # 5、targets由cls,xyxy转为xyxy,cls
+            cls = targets[:, 0].reshape(n, 1)
+            bboxes = targets[:, 1:5]
+            targets = np.concatenate((bboxes, cls), axis=1)
 
         return image, targets
 
