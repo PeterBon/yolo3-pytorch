@@ -29,14 +29,14 @@ class YoloDataset(Dataset):
     def rand(self, a=0, b=1):
         return np.random.rand() * (b - a) + a
 
-    def get_random_data(self, annotation_line, input_shape, hgain=.5, sgain=.5, vgain=.5):
+    def get_random_data(self, annotation_line, input_shape, hgain=.1, sgain=.5, vgain=.5):
         """实时数据增强的随机预处理"""
         line = annotation_line.split()
         # 用opencv读取图片并预处理
         image = cv2.imread(line[0])
         targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls
         bboxes = targets[:, :4]
-        cls = targets[:, -1].reshape(len(targets),1)
+        cls = targets[:, -1].reshape(len(targets), 1)
         # 1、随机裁剪，更新image、bboxes和targets
         image, bboxes = random_crop(image, bboxes)
         targets = np.concatenate((cls, bboxes), axis=1)
@@ -51,7 +51,7 @@ class YoloDataset(Dataset):
         augment_hsv(image, hgain=hgain, sgain=sgain, vgain=vgain)
 
         # 5、targets由cls,xyxy转为xyxy,cls
-        cls = targets[:, 0]
+        cls = targets[:, 0].reshape(len(targets), 1)
         bboxes = targets[:, 1:5]
         targets = np.concatenate((bboxes, cls), axis=1)
 
