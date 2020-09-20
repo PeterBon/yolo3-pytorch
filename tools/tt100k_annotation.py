@@ -1,7 +1,7 @@
 import json
 import os
 
-datadir = "../../datasets/tt100k"  # 数据目录
+datadir = "C:/Users/Peter/PycharmProjects/datasets/tt100k"  # 数据目录
 filedir = datadir + "/annotations.json"  # 标签文件
 ids_train = open(datadir + "/train/ids.txt").read().splitlines()  # 训练集图片的id
 annos = json.loads(open(filedir).read())
