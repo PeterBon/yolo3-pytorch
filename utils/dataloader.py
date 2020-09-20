@@ -134,7 +134,7 @@ def random_crop(image, bboxes):
     return image, bboxes
 
 
-def letterbox(img, targets=(), new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
+def letterbox(img, targets=(), new_shape=(416, 416), color=(114, 114, 114), auto=False, scaleFill=False, scaleup=True):
     # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232
     shape = img.shape[:2]  # current shape [height, width]
     if isinstance(new_shape, int):
