@@ -37,7 +37,7 @@ class YoloDataset(Dataset):
         targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls 可能为空shape = (0,)
         n = len(targets)
         if n:
-            bboxes = targets[:, :4]
+            bboxes = targets[:, :4].reshape(n, 4)
             cls = targets[:, -1].reshape(n, 1)
             # 1、随机裁剪，更新image、bboxes和targets
             image, bboxes = random_crop(image, bboxes)
@@ -53,9 +53,7 @@ class YoloDataset(Dataset):
             augment_hsv(image, hgain=hgain, sgain=sgain, vgain=vgain)
 
             # 5、targets由cls,xyxy转为xyxy,cls
-            cls = targets[:, 0].reshape(n, 1)
-            bboxes = targets[:, 1:5]
-            targets = np.concatenate((bboxes, cls), axis=1)
+            targets = switch_targets(targets, format=0)
 
         return image, targets
 
@@ -169,10 +167,10 @@ def letterbox(img, targets=(), new_shape=(416, 416), color=(114, 114, 114), auto
     if len(targets):
         # targets:cls,xyxy
         box = targets[:, 1:5]
-        box[:, 0] = box[:, 0] * ratio + dw
-        box[:, 1] = box[:, 1] * ratio + dh
-        box[:, 2] = box[:, 2] * ratio + dw
-        box[:, 3] = box[:, 3] * ratio + dh
+        box[:, 0] = box[:, 0] * r + dw
+        box[:, 1] = box[:, 1] * r + dh
+        box[:, 2] = box[:, 2] * r + dw
+        box[:, 3] = box[:, 3] * r + dh
 
         i = box_candidates(targets[:, 1:5].T * ratio, box.T)
         targets = targets[i]
@@ -295,7 +293,7 @@ def box_candidates(box1, box2, wh_thr=2, ar_thr=20, area_thr=0.1):  # box1(4,n),
     return (w2 > wh_thr) & (h2 > wh_thr) & (w2 * h2 / (w1 * h1 + 1e-16) > area_thr) & (ar < ar_thr)  # candidates
 
 
-def switch_targets(targets,format):
+def switch_targets(targets=(), format=0):
     """
     转换targets
     输入：targets:cls,xyxy或是xyxy,cls
@@ -303,3 +301,14 @@ def switch_targets(targets,format):
                1-xyxy,cls to cls,xyxy
     输出：xyxy,cls或是cls,xyxy
     """
+    n = len(targets)
+    if n:
+        if format == 0:
+            cls = targets[:, 0].reshape(n, 1)
+            bboxes = targets[:, 1:5].reshape(n, 4)
+            targets = np.concatenate((bboxes, cls), axis=1)
+        elif format == 1:
+            cls = targets[:, 4].reshape(n, 1)
+            bboxes = targets[:, 0:4].reshape(n, 4)
+            targets = np.concatenate((cls, bboxes), axis=1)
+    return targets
