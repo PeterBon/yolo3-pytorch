@@ -35,6 +35,7 @@ class YoloDataset(Dataset):
         # 用opencv读取图片并预处理
         image = cv2.imread(line[0])
         targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls 可能为空shape = (0,)
+
         n = len(targets)
         if n:
             bboxes = targets[:, :4].reshape(n, 4)
@@ -43,17 +44,17 @@ class YoloDataset(Dataset):
             image, bboxes = random_crop(image, bboxes)
             targets = np.concatenate((cls, bboxes), axis=1)
 
-            # 2、letterbox，输出416x416
-            image, targets = letterbox(image, targets, new_shape=input_shape)
+        # 2、letterbox，输出416x416
+        image, targets = letterbox(image, targets, new_shape=input_shape)
 
-            # 3、随机透视变换
-            image, targets = random_perspective(image, targets)
+        # 3、随机透视变换
+        image, targets = random_perspective(image, targets)
 
-            # 4、色域变换
-            augment_hsv(image, hgain=hgain, sgain=sgain, vgain=vgain)
+        # 4、色域变换
+        augment_hsv(image, hgain=hgain, sgain=sgain, vgain=vgain)
 
-            # 5、targets由cls,xyxy转为xyxy,cls
-            targets = switch_targets(targets, format=0)
+        # 5、targets由cls,xyxy转为xyxy,cls
+        targets = switch_targets(targets, format=0)
 
         return image, targets
 
@@ -172,7 +173,7 @@ def letterbox(img, targets=(), new_shape=(416, 416), color=(114, 114, 114), auto
         box[:, 2] = box[:, 2] * r + dw
         box[:, 3] = box[:, 3] * r + dh
 
-        i = box_candidates(targets[:, 1:5].T * ratio, box.T)
+        i = box_candidates(targets[:, 1:5].T * r, box.T)
         targets = targets[i]
         targets[:, 1:5] = box[i]
 

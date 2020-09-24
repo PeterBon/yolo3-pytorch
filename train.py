@@ -108,14 +108,14 @@ def init_weights(model):
 #----------------------------------------------------#
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--start_epoch", type=int, default=0, help="start number of epoch")
-    parser.add_argument("--end_epoch", type=int, default=20, help="number of epochs")
+    parser.add_argument("--start_epoch", type=int, default=20, help="start number of epoch")
+    parser.add_argument("--end_epoch", type=int, default=40, help="number of epochs")
     parser.add_argument("--lr", type=float, default=0.001, help="number of epochs")
     parser.add_argument("--gamma", type=float, default=0.95, help="number of epochs")
     parser.add_argument("--freeze", type=bool, default=True, help="是否将前面冻结训练")
     parser.add_argument("--annotation_path", type=str, default='tt100k_train.txt', help="train.txt")
     parser.add_argument("--batch_size", type=int, default=4, help="size of each image batch")
-    parser.add_argument("--pretrained_weights", type=str, default="logs/yolo_weights.pth",
+    parser.add_argument("--pretrained_weights", type=str, default="logs/Epoch20-Total_Loss9.7551-Val_Loss12.3578.pth",
                         help="if specified starts from checkpoint model")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     opt = parser.parse_args()
