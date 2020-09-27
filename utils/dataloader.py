@@ -101,6 +101,34 @@ def yolo_dataset_collate(batch):
     return images, bboxes
 
 
+def random_crop(image, targets=(), shape=(416, 416), wh_thr=2, ar_thr=20, area_thr=0.1):
+    """
+    以固定大小随机截取图像
+    targets:cls,xyxy
+    """
+    oh, ow, _ = image.shape
+    nh, nw = shape
+    max_top, max_left = max(0, oh - nh), max(0, ow - nw)
+    ymin = random.uniform(0, max_top)
+    xmin = random.uniform(0, max_left)
+    ymax = ymin + nh
+    xmax = xmin + nw
+    image = image[ymin:ymax, xmin:xmax]
+
+    # 处理bboxes
+    if len(targets):
+        bboxes = targets[:, 1:5]
+        bboxes[:, [0, 2]] = bboxes[:, [0, 2]] - xmin
+        bboxes[:, [1, 3]] = bboxes[:, [1, 3]] - ymin
+        bboxes[:, [0, 2]] = bboxes[:, [0, 2]].clip(0, nw)
+        bboxes[:, [1, 3]] = bboxes[:, [1, 3]].clip(0, nh)
+        i = box_candidates(box1=targets[:, 1:5].T, box2=bboxes.T, wh_thr=wh_thr, ar_thr=ar_thr, area_thr=area_thr)
+        targets = targets[i]
+        targets[:, 1:5] = bboxes[i]
+
+    return image, targets
+
+
 def random_crop(image, bboxes):
     """
     裁剪后的图片要包含所有的框

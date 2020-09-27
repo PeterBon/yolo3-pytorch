@@ -73,7 +73,7 @@ class mAP_Yolo(YOLO):
         return 
 
 yolo = mAP_Yolo()
-image_ids = open('VOCdevkit/VOC2007/ImageSets/Main/test.txt').read().strip().split()
+image_ids = open('../../datasets/tt100k/test_new/ids.txt').read().strip().split()
 
 if not os.path.exists("./input"):
     os.makedirs("./input")
@@ -84,7 +84,7 @@ if not os.path.exists("./input/images-optional"):
 
 
 for image_id in tqdm(image_ids):
-    image_path = "./VOCdevkit/VOC2007/JPEGImages/"+image_id+".jpg"
+    image_path = '../../datasets/tt100k/test_new/'+image_id+'.jpg'
     image = Image.open(image_path)
     # 开启后在之后计算mAP可以可视化
     # image.save("./input/images-optional/"+image_id+".jpg")

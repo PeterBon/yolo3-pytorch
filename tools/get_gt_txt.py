@@ -8,8 +8,11 @@ import os
 import glob
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
+import json
 
-image_ids = open('VOCdevkit/VOC2007/ImageSets/Main/test.txt').read().strip().split()
+image_ids = open('../../datasets/tt100k/test_new/ids.txt').read().strip().split()
+annos = json.loads(open('../../datasets/tt100k/test_new/annotations.json').read())
+clses = open('../model_data/tt100k_classes.txt').read().splitlines()
 
 if not os.path.exists("./input"):
     os.makedirs("./input")
@@ -18,17 +21,17 @@ if not os.path.exists("./input/ground-truth"):
 
 for image_id in tqdm(image_ids):
     with open("./input/ground-truth/"+image_id+".txt", "w") as new_f:
-        root = ET.parse("VOCdevkit/VOC2007/Annotations/"+image_id+".xml").getroot()
-        for obj in root.findall('object'):
-            if obj.find('difficult')!=None:
-                difficult = obj.find('difficult').text
-                if int(difficult)==1:
-                    continue
-            obj_name = obj.find('name').text
-            bndbox = obj.find('bndbox')
-            left = bndbox.find('xmin').text
-            top = bndbox.find('ymin').text
-            right = bndbox.find('xmax').text
-            bottom = bndbox.find('ymax').text
-            new_f.write("%s %s %s %s %s\n" % (obj_name, left, top, right, bottom))
+        img = annos['imgs'][image_id]
+        objs = img['objects']
+
+        for obj in objs:
+            obj_name = obj['category']
+            if obj_name in clses:
+                bbox = obj['bbox']
+                xmin = int(bbox['xmin'])
+                ymin = int(bbox['ymin'])
+                xmax = int(bbox['xmax'])
+                ymax = int(bbox['ymax'])
+                b = (xmin, ymin, xmax, ymax)
+                new_f.write("%s %s %s %s %s\n" % (obj_name, xmin, ymin, xmax, ymax))
 print("Conversion completed!")
