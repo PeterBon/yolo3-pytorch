@@ -117,7 +117,7 @@ def random_crop(image, targets=(), shape=(416, 416), wh_thr=2, ar_thr=20, area_t
 
     # 处理bboxes
     if len(targets):
-        bboxes = targets[:, 1:5]
+        bboxes = targets[:, 1:5].copy()
         bboxes[:, [0, 2]] = bboxes[:, [0, 2]] - xmin
         bboxes[:, [1, 3]] = bboxes[:, [1, 3]] - ymin
         bboxes[:, [0, 2]] = bboxes[:, [0, 2]].clip(0, nw)
@@ -195,7 +195,7 @@ def letterbox(img, targets=(), new_shape=(416, 416), color=(114, 114, 114), auto
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
     if len(targets):
         # targets:cls,xyxy
-        box = targets[:, 1:5]
+        box = targets[:, 1:5].copy()
         box[:, 0] = box[:, 0] * r + dw
         box[:, 1] = box[:, 1] * r + dh
         box[:, 2] = box[:, 2] * r + dw
@@ -319,6 +319,8 @@ def box_candidates(box1, box2, wh_thr=2, ar_thr=20, area_thr=0.1):  # box1(4,n),
     w1, h1 = box1[2] - box1[0], box1[3] - box1[1]
     w2, h2 = box2[2] - box2[0], box2[3] - box2[1]
     ar = np.maximum(w2 / (h2 + 1e-16), h2 / (w2 + 1e-16))  # aspect ratio
+    area = w2 * h2 / (w1 * h1 + 1e-16)
+    print(area)
     return (w2 > wh_thr) & (h2 > wh_thr) & (w2 * h2 / (w1 * h1 + 1e-16) > area_thr) & (ar < ar_thr)  # candidates
 
 
@@ -341,3 +343,52 @@ def switch_targets(targets=(), format=0):
             bboxes = targets[:, 0:4].reshape(n, 4)
             targets = np.concatenate((cls, bboxes), axis=1)
     return targets
+
+if __name__ == '__main__':
+    import cv2
+    import os
+    import numpy as np
+    import json
+    from utils.augment import DataAugmentForObjectDetection
+    import torch
+    from torch.autograd import Variable
+    from utils.dataloader import random_crop, random_perspective, letterbox, augment_hsv, box_candidates, switch_targets
+
+
+    def draw(image, bboxes):
+        for bbox in bboxes:
+            x_min = bbox[0]
+            y_min = bbox[1]
+            x_max = bbox[2]
+            y_max = bbox[3]
+            image = cv2.rectangle(image, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (0, 255, 0), 2)
+        cv2.namedWindow('pic', 0)  # 1表示原图
+        cv2.moveWindow('pic', 0, 0)
+        cv2.resizeWindow('pic', 800, 800)  # 可视化的图片大小
+        cv2.imshow('pic', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
+    with open('../tt100k_train.txt') as f:
+        lines = f.readlines()
+
+    line = lines[11].split()
+    image = cv2.imread(line[0])
+    targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls
+    n = len(targets)
+    bboxes = targets[:, :4]
+    cls = targets[:, -1].reshape(n, 1)
+
+    targets = switch_targets(targets, 1)
+    print(image.shape)
+    print(targets)
+    targets = targets.astype(np.float)
+    image, targets = random_crop(image, targets, shape=(608, 608), area_thr=0.8)
+    print(image.shape)
+    print(targets)
+
+
+    draw(image, targets[:, 1:5].tolist())
+    print(image.shape)
+    print(targets)
