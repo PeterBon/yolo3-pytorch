@@ -109,8 +109,8 @@ def random_crop(image, targets=(), shape=(416, 416), wh_thr=2, ar_thr=20, area_t
     oh, ow, _ = image.shape
     nh, nw = shape
     max_top, max_left = max(0, oh - nh), max(0, ow - nw)
-    ymin = random.uniform(0, max_top)
-    xmin = random.uniform(0, max_left)
+    ymin = int(random.uniform(0, max_top))
+    xmin = int(random.uniform(0, max_left))
     ymax = ymin + nh
     xmax = xmin + nw
     image = image[ymin:ymax, xmin:xmax]
