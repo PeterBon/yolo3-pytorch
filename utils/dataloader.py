@@ -101,7 +101,7 @@ def yolo_dataset_collate(batch):
     return images, bboxes
 
 
-def random_crop(image, targets=(), shape=(416, 416), wh_thr=2, ar_thr=20, area_thr=0.1):
+def random_crop(image, targets=(), shape=(416, 416), wh_thr=2, ar_thr=20, area_thr=0.6):
     """
     以固定大小随机截取图像
     targets:cls,xyxy
