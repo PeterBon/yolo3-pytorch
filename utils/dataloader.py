@@ -41,7 +41,7 @@ class YoloDataset(Dataset):
             bboxes = targets[:, :4].reshape(n, 4)
             cls = targets[:, -1].reshape(n, 1)
             # 1、随机裁剪，更新image、bboxes和targets
-            image, bboxes = random_crop(image, bboxes)
+            image, bboxes = random_crop_box(image, bboxes)
             targets = np.concatenate((cls, bboxes), axis=1)
 
         # 2、letterbox，输出416x416
@@ -129,7 +129,7 @@ def random_crop(image, targets=(), shape=(416, 416), wh_thr=2, ar_thr=20, area_t
     return image, targets
 
 
-def random_crop(image, bboxes):
+def random_crop_box(image, bboxes):
     """
     裁剪后的图片要包含所有的框
     输入:
