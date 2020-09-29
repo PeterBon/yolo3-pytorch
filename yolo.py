@@ -20,9 +20,9 @@ from utils.util import non_max_suppression, bbox_iou, DecodeBox,letterbox_image,
 #--------------------------------------------#
 class YOLO(object):
     _defaults = {
-        "model_path": '../logs/Epoch30-Total_Loss8.1913-Val_Loss11.3776.pth',
+        "model_path": '../logs/Epoch40-Total_Loss0.6345-Val_Loss0.6139.pth',
         "classes_path": '../model_data/tt100k_classes.txt',
-        "model_image_size" : (2048, 2048, 3),
+        "model_image_size" : (512, 512, 3),
         "confidence": 0.5,
         "iou" : 0.3,
         "cuda": True

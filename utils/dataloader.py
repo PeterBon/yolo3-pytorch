@@ -30,19 +30,14 @@ class YoloDataset(Dataset):
         return np.random.rand() * (b - a) + a
 
     def get_random_data(self, annotation_line, input_shape, hgain=.1, sgain=.5, vgain=.5):
-        """实时数据增强的随机预处理"""
+        """实时数据增强的随机预处理 格式为BGR"""
         line = annotation_line.split()
         # 用opencv读取图片并预处理
         image = cv2.imread(line[0])
         targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls 可能为空shape = (0,)
 
-        n = len(targets)
-        if n:
-            bboxes = targets[:, :4].reshape(n, 4)
-            cls = targets[:, -1].reshape(n, 1)
-            # 1、随机裁剪，更新image、bboxes和targets
-            image, bboxes = random_crop_box(image, bboxes)
-            targets = np.concatenate((cls, bboxes), axis=1)
+        targets = switch_targets(targets, format=1) # cls,xyxy
+        image, targets = random_crop(image, targets, shape=input_shape, area_thr=0.6)
 
         # 2、letterbox，输出416x416
         image, targets = letterbox(image, targets, new_shape=input_shape)
@@ -342,6 +337,7 @@ def switch_targets(targets=(), format=0):
             targets = np.concatenate((cls, bboxes), axis=1)
     return targets
 
+
 if __name__ == '__main__':
     import cv2
     import os
@@ -385,7 +381,6 @@ if __name__ == '__main__':
     image, targets = random_crop(image, targets, shape=(608, 608), area_thr=0.6)
     print(image.shape)
     print(targets)
-
 
     draw(image, targets[:, 1:5].tolist())
     print(image.shape)
