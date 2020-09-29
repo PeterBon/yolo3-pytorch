@@ -36,8 +36,8 @@ class YoloDataset(Dataset):
         image = cv2.imread(line[0])
         targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls 可能为空shape = (0,)
 
-        targets = switch_targets(targets, format=1) # cls,xyxy
-        image, targets = random_crop(image, targets, shape=input_shape, area_thr=0.6)
+        targets = switch_targets(targets, format=1)  # cls,xyxy
+        image, targets = random_crop_plus(image, targets, shape=input_shape, area_thr=0.6)
 
         # 2、letterbox，输出416x416
         image, targets = letterbox(image, targets, new_shape=input_shape)
@@ -122,6 +122,42 @@ def random_crop(image, targets=(), shape=(416, 416), wh_thr=2, ar_thr=20, area_t
         targets[:, 1:5] = bboxes[i]
 
     return image, targets
+
+
+def random_crop_plus(image, targets=(), shape=(416, 416), wh_thr=2, ar_thr=20, area_thr=0.6):
+    """
+    随机截取图像，至少包含一个bbox
+    targets:cls,xyxy
+    """
+    n = len(targets)
+    if n:
+        oh, ow, _ = image.shape
+        nh, nw = shape
+        i = random.randint(0, n - 1)  # 随机选一个target
+        xmin = int(random.uniform(targets[i, 3] - nw, targets[i, 1]).clip(0,ow))
+        ymin = int(random.uniform(targets[i, 4] - nh, targets[i, 2]).clip(0,oh))
+        xmax = xmin + nw
+        if xmax>ow:
+            xmax = ow
+            xmin = xmax-nw
+        ymax = ymin + nh
+        if ymax > oh:
+            ymax = oh
+            ymin = ymax - nh
+
+        image = image[ymin: ymax, xmin: xmax]
+
+        bboxes = targets[:, 1:5].copy()
+        bboxes[:, [0, 2]] = bboxes[:, [0, 2]] - xmin
+        bboxes[:, [1, 3]] = bboxes[:, [1, 3]] - ymin
+        bboxes[:, [0, 2]] = bboxes[:, [0, 2]].clip(0, nw)
+        bboxes[:, [1, 3]] = bboxes[:, [1, 3]].clip(0, nh)
+        i = box_candidates(box1=targets[:, 1:5].T, box2=bboxes.T, wh_thr=wh_thr, ar_thr=ar_thr, area_thr=area_thr)
+        targets = targets[i]
+        targets[:, 1:5] = bboxes[i]
+
+    return image, targets
+
 
 
 def random_crop_box(image, bboxes):
@@ -367,7 +403,7 @@ if __name__ == '__main__':
     with open('../tt100k_train.txt') as f:
         lines = f.readlines()
 
-    line = lines[11].split()
+    line = lines[20].split()
     image = cv2.imread(line[0])
     targets = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])  # xyxy,cls
     n = len(targets)
@@ -378,7 +414,8 @@ if __name__ == '__main__':
     print(image.shape)
     print(targets)
 
-    image, targets = random_crop(image, targets, shape=(608, 608), area_thr=0.6)
+    # image, targets = random_crop(image, targets, shape=(608, 608), area_thr=0.6)
+    image, targets = random_crop_plus(image,targets)
     print(image.shape)
     print(targets)
 
